@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Complaint Submitted | CivicAI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .success-page {
+            min-height: calc(100vh - 76px);
+            padding: 60px 28px 80px;
+        }
+
+        .success-container {
+            max-width: 850px;
+            margin: auto;
+        }
+
+        .success-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .success-icon {
+            width: 65px;
+            height: 65px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        .success-header h1 {
+            font-size: 40px;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+        }
+
+        .success-header p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .success-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .complaint-id-box {
+            background: #f1fbf9;
+            border: 1px solid #a9d7d1;
+            border-radius: 13px;
+            padding: 22px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .complaint-id-box .label {
+            color: var(--text-light);
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .complaint-id-box .id {
+            color: var(--primary);
+            font-size: 25px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .complaint-id-box .hint {
+            color: var(--text-light);
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .detail-box {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 17px;
+        }
+
+        .detail-label {
+            color: var(--text-light);
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .priority {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .ai-section {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 13px;
+            background: #f8faf9;
+            border: 1px solid var(--border);
+        }
+
+        .ai-section h3 {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .ai-section p {
+            color: var(--text-light);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 9px;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .primary-button {
+            background: var(--primary);
+            color: white;
+        }
+
+        .primary-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .secondary-button {
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text-light);
+        }
+
+        .secondary-button:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        @media (max-width: 600px) {
+
+            .success-page {
+                padding: 45px 18px 60px;
+            }
+
+            .success-header h1 {
+                font-size: 32px;
+            }
+
+            .success-card {
+                padding: 22px;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+        <a href="/user-dashboard" class="logo">
+
+            <div class="logo-icon">
+                C
+            </div>
+
+            <span>
+                Civic<span class="logo-ai">AI</span>
+            </span>
+
+        </a>
+
+        <div class="nav-actions">
+
+            <a href="/logout" class="track-link">
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="success-page">
+
+    <div class="success-container">
+
+
+        <section class="success-header">
+
+            <div class="success-icon">
+                ✓
+            </div>
+
+            <h1>
+                Complaint Submitted
+            </h1>
+
+            <p>
+                Your complaint has been successfully submitted
+                and analyzed by CivicAI.
+            </p>
+
+        </section>
+
+
+        <div class="success-card">
+
+
+            <!-- COMPLAINT ID -->
+
+            <div class="complaint-id-box">
+
+                <div class="label">
+                    YOUR COMPLAINT ID
+                </div>
+
+                <div class="id">
+                    {{ complaint_id }}
+                </div>
+
+                <div class="hint">
+                    Please save this ID to track your complaint.
+                </div>
+
+            </div>
+
+
+            <!-- COMPLAINT DETAILS -->
+
+            <div class="details-grid">
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        ISSUE CATEGORY
+                    </div>
+
+                    <div class="detail-value">
+                        {{ category }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        PRIORITY
+                    </div>
+
+                    <div class="detail-value">
+
+                        <span class="priority">
+                            {{ priority }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        RESPONSIBLE DEPARTMENT
+                    </div>
+
+                    <div class="detail-value">
+                        {{ department }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        STATUS
+                    </div>
+
+                    <div class="detail-value">
+
+                        <span class="status">
+                            {{ status }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        AI CONFIDENCE
+                    </div>
+
+                    <div class="detail-value">
+                        {{ confidence }}%
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        SLA
+                    </div>
+
+                    <div class="detail-value">
+                        {{ sla_hours }} hours
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+            <!-- AI INFORMATION -->
+
+            <div class="ai-section">
+
+                <h3>
+                    🤖 CivicAI Analysis
+                </h3>
+
+                <p>
+                    CivicAI's Text AI analyzed your complaint,
+                    identified the issue category, determined
+                    its priority, calculated the SLA, and routed
+                    it to the appropriate department.
+                </p>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="actions">
+
+                <a
+                    href="/track"
+                    class="button primary-button">
+
+                    Track Complaint →
+
+                </a>
+
+
+                <a
+                    href="/my-complaints"
+                    class="button secondary-button">
+
+                    My Complaints
+
+                </a>
+
+
+                <a
+                    href="/user-dashboard"
+                    class="button secondary-button">
+
+                    Dashboard
+
+                </a>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>

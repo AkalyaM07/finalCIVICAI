@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Complaint Details | CivicAI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .result-page {
+            min-height: calc(100vh - 76px);
+            padding: 60px 28px 80px;
+        }
+
+        .result-container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .result-header {
+            margin-bottom: 30px;
+        }
+
+        .result-header h1 {
+            font-size: 40px;
+            letter-spacing: -2px;
+            margin: 12px 0 8px;
+        }
+
+        .result-header p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .result-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .complaint-id {
+            background: var(--primary-light);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 25px;
+        }
+
+        .complaint-id small {
+            display: block;
+            color: var(--text-light);
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .complaint-id strong {
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .detail-box {
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 16px;
+        }
+
+        .detail-box.full {
+            grid-column: span 2;
+        }
+
+        .detail-label {
+            color: var(--text-light);
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 11px;
+            border-radius: 20px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+
+            .result-page {
+                padding: 40px 18px;
+            }
+
+            .result-header h1 {
+                font-size: 32px;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-box.full {
+                grid-column: span 1;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+        <a href="/user-dashboard" class="logo">
+
+            <div class="logo-icon">
+                C
+            </div>
+
+            <span>
+                Civic<span class="logo-ai">AI</span>
+            </span>
+
+        </a>
+
+        <div class="nav-actions">
+
+            <a href="/logout" class="track-link">
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="result-page">
+
+    <div class="result-container">
+
+        <section class="result-header">
+
+            <div class="section-label">
+                COMPLAINT STATUS
+            </div>
+
+            <h1>
+                Complaint Details
+            </h1>
+
+            <p>
+                Here is the latest information about your complaint.
+            </p>
+
+        </section>
+
+
+        <div class="result-card">
+
+            <div class="complaint-id">
+
+                <small>
+                    COMPLAINT ID
+                </small>
+
+                <strong>
+                    {{ complaint["complaint_id"] }}
+                </strong>
+
+            </div>
+
+
+            <div class="details-grid">
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Category
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["category"] }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Priority
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["priority"] }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Department
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["department"] }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Status
+                    </div>
+
+                    <div class="detail-value">
+
+                        <span class="status">
+                            {{ complaint["status"] }}
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Location
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["location"] }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        AI Confidence
+                    </div>
+
+                    <div class="detail-value">
+                        {{ "%.2f"|format(complaint["ai_confidence"]) }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        Submitted On
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["created_at"] }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box">
+
+                    <div class="detail-label">
+                        SLA Deadline
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["sla_deadline"] }}
+                    </div>
+
+                </div>
+
+
+                <div class="detail-box full">
+
+                    <div class="detail-label">
+                        Complaint Description
+                    </div>
+
+                    <div class="detail-value">
+                        {{ complaint["description"] }}
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+        <a href="/user-dashboard" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>

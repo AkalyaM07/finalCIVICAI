@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Track Complaint | CivicAI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+
+        .track-page {
+            min-height: calc(100vh - 76px);
+            padding: 70px 28px;
+        }
+
+        .track-container {
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .track-header {
+            margin-bottom: 35px;
+        }
+
+        .track-header .section-label {
+            margin-bottom: 15px;
+        }
+
+        .track-header h1 {
+            font-size: 42px;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+        }
+
+        .track-header p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .track-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 17px;
+            padding: 35px;
+            box-shadow: var(--shadow);
+        }
+
+        .track-card label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 9px;
+        }
+
+        .track-card input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        .track-card input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .track-button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 9px;
+            background: var(--primary);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .track-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+
+            .track-page {
+                padding: 45px 18px;
+            }
+
+            .track-card {
+                padding: 25px;
+            }
+
+            .track-header h1 {
+                font-size: 34px;
+            }
+
+        }
+
+    </style>
+</head>
+
+
+<body>
+
+<header class="navbar">
+
+    <div class="nav-container">
+
+        <a href="/user-dashboard" class="logo">
+
+            <div class="logo-icon">
+                C
+            </div>
+
+            <span>
+                Civic<span class="logo-ai">AI</span>
+            </span>
+
+        </a>
+
+        <div class="nav-actions">
+
+            <a href="/logout" class="track-link">
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="track-page">
+
+    <div class="track-container">
+
+        <section class="track-header">
+
+            <div class="section-label">
+                TRACK COMPLAINT
+            </div>
+
+            <h1>
+                Track Your Complaint
+            </h1>
+
+            <p>
+                Enter your complaint ID to check its current
+                status and progress.
+            </p>
+
+        </section>
+
+
+        <div class="track-card">
+
+            <form action="/track-complaint" method="POST">
+
+                <label for="complaint_id">
+                    Complaint ID
+                </label>
+
+                <input
+                    type="text"
+                    id="complaint_id"
+                    name="complaint_id"
+                    placeholder="Example: CIV-AB12CD34"
+                    required
+                >
+
+                <button
+                    type="submit"
+                    class="track-button">
+
+                    Track Complaint →
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        <a href="/user-dashboard" class="back-link">
+            ← Back to Dashboard
+        </a>
+
+    </div>
+
+</main>
+
+</body>
+
+</html>
