@@ -9,13 +9,11 @@ from ai.ai_engine import analyze_complaint
 
 app = Flask(__name__)
 
-app.secret_key = "civicai-demo-secret"
+app.secret_key = "civicai_secret_key"
 
 DATABASE = "civicai.db"
 
 UPLOAD_FOLDER = "static/uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -24,11 +22,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 # =========================================================
 
 def get_db_connection():
-
     connection = sqlite3.connect(DATABASE)
-
     connection.row_factory = sqlite3.Row
-
     return connection
 
 
@@ -38,7 +33,6 @@ def get_db_connection():
 
 @app.route("/")
 def home():
-
     return redirect(url_for("login"))
 
 
@@ -46,187 +40,106 @@ def home():
 # LOGIN
 # =========================================================
 
-@app.route("/login", methods=["GET"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
 
+    if request.method == "POST":
+
+        email = request.form["email"]
+        password = request.form["password"]
+        role = request.form["role"]
+
+        connection = get_db_connection()
+
+        user = connection.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE email = ?
+            AND password = ?
+            AND role = ?
+            """,
+            (email, password, role)
+        ).fetchone()
+
+        connection.close()
+
+        if user:
+
+            session["user_id"] = user["id"]
+            session["name"] = user["name"]
+            session["email"] = user["email"]
+            session["role"] = user["role"]
+
+            if role == "admin":
+                return redirect(url_for("admin_dashboard"))
+
+            return redirect(url_for("user_dashboard"))
+
+        return render_template(
+            "login.html",
+            error="Invalid email, password or role"
+        )
+
     return render_template("login.html")
-
-
-@app.route("/login", methods=["POST"])
-def login_user():
-
-    email = request.form["email"].strip()
-
-    password = request.form["password"]
-
-    role = request.form["role"]
-
-
-    connection = get_db_connection()
-
-
-    user = connection.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE email = ?
-        AND password = ?
-        AND role = ?
-        """,
-        (email, password, role)
-    ).fetchone()
-
-
-    connection.close()
-
-
-    if user is None:
-
-        return "Invalid email, password, or role"
-
-
-    session["user_id"] = user["id"]
-
-    session["name"] = user["name"]
-
-    session["email"] = user["email"]
-
-    session["role"] = user["role"]
-
-
-    # ADMIN LOGIN
-    if user["role"] == "admin":
-
-        return redirect(url_for("admin_dashboard"))
-
-
-    # CITIZEN LOGIN
-    return redirect(url_for("user_dashboard"))
 
 
 # =========================================================
 # SIGNUP
 # =========================================================
 
-@app.route("/signup", methods=["GET"])
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
 
-    # Get role from URL
-    # Example:
-    # /signup?role=user
-    # /signup?role=admin
+    if request.method == "POST":
 
-    role = request.args.get("role", "user")
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        role = request.form["role"]
 
+        connection = get_db_connection()
 
-    # Only allow user or admin
-    if role not in ["user", "admin"]:
+        try:
 
-        role = "user"
+            connection.execute(
+                """
+                INSERT INTO users
+                (name, email, password, role)
+                VALUES (?, ?, ?, ?)
+                """,
+                (name, email, password, role)
+            )
 
+            connection.commit()
 
-    return render_template(
-        "signup.html",
-        role=role
-    )
+        except sqlite3.IntegrityError:
 
+            connection.close()
 
-@app.route("/signup", methods=["POST"])
-def signup_user():
-
-    name = request.form["name"].strip()
-
-    email = request.form["email"].strip()
-
-    password = request.form["password"]
-
-    confirm_password = request.form["confirm_password"]
-
-    role = request.form["role"]
-
-
-    # Make sure role is valid
-
-    if role not in ["user", "admin"]:
-
-        return "Invalid account type"
-
-
-    # Check passwords
-
-    if password != confirm_password:
-
-        return "Passwords do not match"
-
-
-    connection = get_db_connection()
-
-
-    # Check whether email already exists
-
-    existing_user = connection.execute(
-        """
-        SELECT id
-        FROM users
-        WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
-
-
-    if existing_user:
+            return render_template(
+                "signup.html",
+                error="Email already exists"
+            )
 
         connection.close()
 
-        return "Email already registered"
+        return redirect(url_for("login"))
 
-
-    # Create account with selected role
-
-    connection.execute(
-        """
-        INSERT INTO users
-        (
-            name,
-            email,
-            password,
-            role
-        )
-        VALUES (?, ?, ?, ?)
-        """,
-        (
-            name,
-            email,
-            password,
-            role
-        )
-    )
-
-
-    connection.commit()
-
-    connection.close()
-
-
-    # After signup go to login
-
-    return redirect(url_for("login"))
+    return render_template("signup.html")
 
 
 # =========================================================
-# USER DASHBOARD
+# CITIZEN DASHBOARD
 # =========================================================
 
 @app.route("/user-dashboard")
 def user_dashboard():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
-
     connection = get_db_connection()
-
 
     complaints = connection.execute(
         """
@@ -238,9 +151,7 @@ def user_dashboard():
         (session["name"],)
     ).fetchall()
 
-
     connection.close()
-
 
     return render_template(
         "user_dashboard.html",
@@ -255,13 +166,10 @@ def user_dashboard():
 @app.route("/admin-dashboard")
 def admin_dashboard():
 
-    if session.get("role") != "admin":
-
+    if "user_id" not in session or session.get("role") != "admin":
         return redirect(url_for("login"))
 
-
     connection = get_db_connection()
-
 
     complaints = connection.execute(
         """
@@ -271,33 +179,103 @@ def admin_dashboard():
         """
     ).fetchall()
 
-
     connection.close()
 
+    # Convert database rows into dictionaries
+    # and calculate SLA status
+    complaint_list = []
+
+    now = datetime.now()
+
+    for complaint in complaints:
+
+        complaint = dict(complaint)
+
+        sla_status = "No SLA"
+
+        if complaint.get("sla_deadline"):
+
+            try:
+
+                deadline = datetime.fromisoformat(
+                    complaint["sla_deadline"]
+                )
+
+                # Resolved complaints should not be marked overdue
+                if complaint["status"] == "Resolved":
+
+                    sla_status = "Resolved"
+
+                elif now > deadline:
+
+                    sla_status = "Overdue"
+
+                else:
+
+                    sla_status = "Within SLA"
+
+            except ValueError:
+
+                sla_status = "No SLA"
+
+        complaint["sla_status"] = sla_status
+
+        complaint_list.append(complaint)
+
+    # =====================================================
+    # DASHBOARD STATISTICS
+    # =====================================================
+
+    total_complaints = len(complaint_list)
+
+    submitted_count = sum(
+        1 for c in complaint_list
+        if c["status"] == "Submitted"
+    )
+
+    in_progress_count = sum(
+        1 for c in complaint_list
+        if c["status"] == "In Progress"
+    )
+
+    resolved_count = sum(
+        1 for c in complaint_list
+        if c["status"] == "Resolved"
+    )
+
+    overdue_count = sum(
+        1 for c in complaint_list
+        if c["sla_status"] == "Overdue"
+    )
+
+    within_sla_count = sum(
+        1 for c in complaint_list
+        if c["sla_status"] == "Within SLA"
+    )
 
     return render_template(
         "admin_dashboard.html",
-        complaints=complaints
+        complaints=complaint_list,
+        total_complaints=total_complaints,
+        submitted_count=submitted_count,
+        in_progress_count=in_progress_count,
+        resolved_count=resolved_count,
+        overdue_count=overdue_count,
+        within_sla_count=within_sla_count
     )
 
 
 # =========================================================
-# TEXT REPORT PAGE
+# TEXT COMPLAINT REPORT PAGE
 # =========================================================
 
 @app.route("/report")
 def report():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
-
-    return render_template(
-        "report.html",
-        name=session.get("name"),
-        email=session.get("email")
-    )
+    return render_template("report.html")
 
 
 # =========================================================
@@ -307,73 +285,75 @@ def report():
 @app.route("/submit-complaint", methods=["POST"])
 def submit_complaint():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
+    phone = request.form.get("phone", "")
+    description = request.form.get("description", "")
+    location = request.form.get("location", "")
 
-    name = session["name"]
-
-    phone = request.form["phone"].strip()
-
-    description = request.form["description"].strip()
-
-    location = request.form["location"].strip()
-
+    # =====================================================
+    # GENERATE COMPLAINT ID
+    # =====================================================
 
     complaint_id = "CIV-" + str(uuid.uuid4())[:8].upper()
 
-
-    # AI ANALYSIS
+    # =====================================================
+    # AI TEXT ANALYSIS
+    # =====================================================
 
     ai_result = analyze_complaint(description)
 
-
     category = ai_result["category"]
-
     priority = ai_result["priority"]
-
     department = ai_result["department"]
-
-    ai_confidence = ai_result["confidence"]
-
+    confidence = ai_result["confidence"]
     sla_hours = ai_result["sla_hours"]
 
+    # =====================================================
+    # TIME + SLA DEADLINE
+    # =====================================================
 
     created_at = datetime.now()
-
 
     sla_deadline = created_at + timedelta(
         hours=sla_hours
     )
 
+    # =====================================================
+    # STATUS
+    # =====================================================
 
     status = "Submitted"
 
+    # =====================================================
+    # IMAGE
+    # =====================================================
 
-    # Optional image
+    image_path = None
 
-    image = request.files.get("photo")
-
-    image_path = ""
-
+    image = request.files.get("image")
 
     if image and image.filename:
 
-        filename = complaint_id + "_" + image.filename
-
+        filename = (
+            str(uuid.uuid4())
+            + "_"
+            + image.filename
+        )
 
         image_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
+            UPLOAD_FOLDER,
             filename
         )
 
-
         image.save(image_path)
 
+    # =====================================================
+    # SAVE TO DATABASE
+    # =====================================================
 
     connection = get_db_connection()
-
 
     connection.execute(
         """
@@ -398,7 +378,7 @@ def submit_complaint():
         """,
         (
             complaint_id,
-            name,
+            session["name"],
             phone,
             description,
             category,
@@ -406,19 +386,20 @@ def submit_complaint():
             department,
             location,
             status,
-            "Website",
-            created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            sla_deadline.strftime("%Y-%m-%d %H:%M:%S"),
-            ai_confidence,
+            "Text",
+            created_at.isoformat(),
+            sla_deadline.isoformat(),
+            confidence,
             image_path
         )
     )
 
-
     connection.commit()
-
     connection.close()
 
+    # =====================================================
+    # SUCCESS PAGE
+    # =====================================================
 
     return render_template(
         "success.html",
@@ -426,7 +407,7 @@ def submit_complaint():
         category=category,
         priority=priority,
         department=department,
-        confidence=ai_confidence,
+        confidence=confidence,
         sla_hours=sla_hours,
         status=status
     )
@@ -439,10 +420,8 @@ def submit_complaint():
 @app.route("/image-report")
 def image_report():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
-
 
     return render_template("image_report.html")
 
@@ -454,57 +433,49 @@ def image_report():
 @app.route("/submit-image-complaint", methods=["POST"])
 def submit_image_complaint():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
-
 
     image = request.files.get("image")
 
+    if not image or not image.filename:
 
-    if not image or image.filename == "":
-
-        return "Please select an image"
-
+        return redirect(
+            url_for("image_report")
+        )
 
     complaint_id = "CIV-" + str(uuid.uuid4())[:8].upper()
 
-
-    filename = complaint_id + "_" + image.filename
-
+    filename = (
+        str(uuid.uuid4())
+        + "_"
+        + image.filename
+    )
 
     image_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
+        UPLOAD_FOLDER,
         filename
     )
 
-
     image.save(image_path)
 
+    # Image ML is still being integrated
+    category = "Pending Image AI Analysis"
+    priority = "Pending"
+    department = "Pending"
 
     created_at = datetime.now()
 
-
-    category = "Pending Image AI Analysis"
-
-    priority = "Pending"
-
-    department = "Pending"
-
-    status = "Submitted"
-
-    ai_confidence = 0.0
-
+    # Temporary SLA until Image ML gives category
     sla_hours = 48
-
 
     sla_deadline = created_at + timedelta(
         hours=sla_hours
     )
 
+    status = "Submitted"
 
     connection = get_db_connection()
-
 
     connection.execute(
         """
@@ -531,25 +502,22 @@ def submit_image_complaint():
             complaint_id,
             session["name"],
             "",
-            "Complaint submitted through image",
+            "Image based complaint",
             category,
             priority,
             department,
-            "Not provided",
+            "",
             status,
             "Image",
-            created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            sla_deadline.strftime("%Y-%m-%d %H:%M:%S"),
-            ai_confidence,
+            created_at.isoformat(),
+            sla_deadline.isoformat(),
+            0.0,
             image_path
         )
     )
 
-
     connection.commit()
-
     connection.close()
-
 
     return render_template(
         "success.html",
@@ -557,23 +525,21 @@ def submit_image_complaint():
         category=category,
         priority=priority,
         department=department,
-        confidence=ai_confidence,
+        confidence=0.0,
         sla_hours=sla_hours,
         status=status
     )
 
 
 # =========================================================
-# TRACK PAGE
+# TRACK COMPLAINT PAGE
 # =========================================================
 
 @app.route("/track")
 def track():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
-
 
     return render_template("track.html")
 
@@ -585,16 +551,17 @@ def track():
 @app.route("/track-complaint", methods=["POST"])
 def track_complaint():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
+    complaint_id = request.form.get(
+        "complaint_id",
+        ""
+    ).strip()
 
-    complaint_id = request.form["complaint_id"].strip()
-
+    citizen_name = session["name"]
 
     connection = get_db_connection()
-
 
     complaint = connection.execute(
         """
@@ -605,22 +572,58 @@ def track_complaint():
         """,
         (
             complaint_id,
-            session["name"]
+            citizen_name
         )
     ).fetchone()
 
-
     connection.close()
 
+    if not complaint:
 
-    if complaint is None:
+        return render_template(
+            "track_result.html",
+            complaint=None,
+            error="Complaint not found"
+        )
 
-        return "Complaint not found"
+    complaint = dict(complaint)
 
+    # =====================================================
+    # CALCULATE SLA STATUS
+    # =====================================================
+
+    sla_status = "No SLA"
+
+    if complaint.get("sla_deadline"):
+
+        try:
+
+            deadline = datetime.fromisoformat(
+                complaint["sla_deadline"]
+            )
+
+            if complaint["status"] == "Resolved":
+
+                sla_status = "Resolved"
+
+            elif datetime.now() > deadline:
+
+                sla_status = "Overdue"
+
+            else:
+
+                sla_status = "Within SLA"
+
+        except ValueError:
+
+            sla_status = "No SLA"
+
+    complaint["sla_status"] = sla_status
 
     return render_template(
         "track_result.html",
-        complaint=complaint
+        complaint=complaint,
+        error=None
     )
 
 
@@ -631,13 +634,10 @@ def track_complaint():
 @app.route("/my-complaints")
 def my_complaints():
 
-    if session.get("role") != "user":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
-
     connection = get_db_connection()
-
 
     complaints = connection.execute(
         """
@@ -649,13 +649,49 @@ def my_complaints():
         (session["name"],)
     ).fetchall()
 
-
     connection.close()
 
+    complaint_list = []
+
+    now = datetime.now()
+
+    for complaint in complaints:
+
+        complaint = dict(complaint)
+
+        sla_status = "No SLA"
+
+        if complaint.get("sla_deadline"):
+
+            try:
+
+                deadline = datetime.fromisoformat(
+                    complaint["sla_deadline"]
+                )
+
+                if complaint["status"] == "Resolved":
+
+                    sla_status = "Resolved"
+
+                elif now > deadline:
+
+                    sla_status = "Overdue"
+
+                else:
+
+                    sla_status = "Within SLA"
+
+            except ValueError:
+
+                sla_status = "No SLA"
+
+        complaint["sla_status"] = sla_status
+
+        complaint_list.append(complaint)
 
     return render_template(
         "my_complaints.html",
-        complaints=complaints
+        complaints=complaint_list
     )
 
 
@@ -669,18 +705,23 @@ def my_complaints():
 )
 def update_complaint(complaint_id):
 
-    if session.get("role") != "admin":
-
+    if "user_id" not in session:
         return redirect(url_for("login"))
 
+    if session.get("role") != "admin":
+        return redirect(url_for("login"))
 
-    department = request.form["department"]
+    department = request.form.get(
+        "department",
+        ""
+    )
 
-    status = request.form["status"]
-
+    status = request.form.get(
+        "status",
+        ""
+    )
 
     connection = get_db_connection()
-
 
     connection.execute(
         """
@@ -696,11 +737,8 @@ def update_complaint(complaint_id):
         )
     )
 
-
     connection.commit()
-
     connection.close()
-
 
     return redirect(
         url_for("admin_dashboard")
@@ -722,9 +760,11 @@ def logout():
 
 
 # =========================================================
-# RUN
+# RUN APPLICATION
 # =========================================================
 
 if __name__ == "__main__":
 
-    app.run(debug=True)
+    app.run(
+        debug=True
+    )
